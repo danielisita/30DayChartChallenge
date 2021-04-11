@@ -1,0 +1,76 @@
+
+# working dir:
+setwd('../07_physical/')
+
+# libraries
+library(tidyverse)
+# devtools::install_github("hrbrmstr/streamgraph")
+library(streamgraph)
+library(zoo)
+library(htmlwidgets)
+library(hrbrthemes)
+
+# Open data
+autos <- read_csv('autos.csv')
+
+# Im going to divide by 1 millon the values:
+autos2 <- read_csv('autos2.csv') %>% mutate(
+  value = value/1000000,
+  type = as.factor(type),
+  year = as.Date(as.yearmon(year))
+)
+
+# First plot
+ggplot(autos2, aes(x=year, y=value, fill = type)) +
+  geom_area(alpha=0.9) + 
+  labs(x = "Year",
+       y = "Units (in millions)",
+       title = "Size, Vehicle Fleet in Mexico",
+       caption = "Data from INEGI") +
+  scale_fill_discrete(name = "Vehicle class:") + theme_ipsum_rc(grid = "Y")
+
+# The second plot (as percentages):
+autos3 <- autos2 %>% 
+  group_by(year, type) %>% 
+  summarise(n = sum(value)) %>% 
+  mutate(percentage = n / sum(n))
+
+ggplot(autos3, aes(x=year, y=percentage, fill=type)) + 
+  geom_area(alpha=0.9 ) + 
+  labs(x = "Year",
+       y = "Percentage",
+       title = "Distribution, Vehicle Fleet in Mexico",
+       caption = "Data from INEGI") +
+  scale_fill_discrete(name = "Vehicle class:") + theme_ipsum_rc(grid = "Y")  
+
+###########################################################################
+
+# Using streamgraph to make interactive plots
+
+# Type 1 (default)
+p1 <- streamgraph(autos2, key="type", value="value", date="year" , 
+            offset="silhouette",
+            interpolate = "cardinal",
+            interactive = TRUE,
+            # scale = "year", top = 20, right = 40, bottom = 30, left = 50,
+            width="400px", height="300px") %>%
+  sg_axis_x(5, "year", "%Y") %>%
+  # sg_fill_tableau("cyclic") %>% 
+  sg_legend(show=TRUE, label= "Type: ")
+
+saveWidget(p1, file="p1.html", selfcontained = TRUE)
+file.rename("p1.html", "files/p1.html")
+
+# Type 2 
+p2 <- streamgraph(autos2, key="type", value="value", date="year" , 
+                  offset="zero",
+                  width="400px", height="300px") %>%
+  sg_axis_x(5, "year", "%Y") %>%
+  sg_fill_brewer("BuPu")
+
+
+# Type 3.
+p3 <- streamgraph(autos2, key="type", value="value", date="year" , 
+                  offset="expand",
+                  width="400px", height="300px")
+
