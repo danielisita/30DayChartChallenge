@@ -1,0 +1,41 @@
+
+# Set the working directory:
+setwd('../10_abstract/')
+
+# Clean all
+rm(list = ls())
+
+# Installing/running libraries:
+devtools::install_github("cutterkom/generativeart")
+library(generativeart)
+library(tidyverse)
+library(purrr)
+
+# Set the paths for the new files
+
+# set the paths
+IMG_DIR <- "img/"
+IMG_SUBDIR <- "everything/"
+IMG_SUBDIR2 <- "handpicked/"
+IMG_PATH <- paste0(IMG_DIR, IMG_SUBDIR)
+
+LOGFILE_DIR <- "logfile/"
+LOGFILE <- "logfile.csv"
+LOGFILE_PATH <- paste0(LOGFILE_DIR, LOGFILE)
+
+# Create the directory structure
+generativeart::setup_directories(IMG_DIR, IMG_SUBDIR, IMG_SUBDIR2, LOGFILE_DIR)
+
+# Include a specific formula:
+my_formula <- list(
+  x = quote(runif(1, -1, 1) * x_i^2*pi - sin(y_i^2)),
+  y = quote(runif(1, -1, 1) * y_i^2*pi - cos(x_i^2)))
+  
+# You can see all the arguments of the function:
+?generate_img
+
+# The figure:
+generate_img(formula = my_formula, 
+             nr_of_img = 1, polar = FALSE,
+             filetype = "png", color = "black", 
+             background_color = "#eb892f")
