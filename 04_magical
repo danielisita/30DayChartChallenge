@@ -1,0 +1,54 @@
+
+# Set working dir
+setwd('../30DayCharts/04_magical/')
+
+# Libraries
+install.packages("rnaturalearth")
+install.packages("rnaturalearthdata")
+install.packages("rgeos")
+library(rgeos)
+library(rnaturalearthdata)
+library(rnaturalearth)
+library(tidyverse)
+library(sf)
+library(RColorBrewer)
+
+# Load the data obtained from Google Trends
+magic <- read_csv('magic.csv')
+
+# Theme
+theme_set(theme_bw())
+
+# Use ne_countries 
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+
+# Simple plot
+ggplot(world) + geom_sf()
+
+# More features
+ggplot(world) +
+  geom_sf() +
+  xlab("Longitude") + ylab("Latitude") +
+  ggtitle("World map", subtitle = paste0("(", length(unique(world$name)), " countries)"))
+
+# Colors
+ggplot(world) +
+  geom_sf(color = "black", fill = "lightblue") +
+  xlab("Longitude") + ylab("Latitude") +
+  ggtitle("World map", subtitle = paste0("(", length(unique(world$name)), " countries)"))
+
+# We can merge the two data frames
+a <- left_join(world, magic)
+
+# The magic map chart:
+m <- ggplot(a) +
+  geom_sf(aes(fill=value), alpha = 0.9) +
+  xlab("Long") + ylab("Lat") +
+  ggtitle("Worldwide Map of Google search term 'magic'", subtitle = paste0("(", length(unique(world$name)), " countries)")) 
+
+m + scale_fill_viridis_c(option = "D", alpha = .4, direction = -1)
+
+m + scale_fill_distiller(palette = "Spectral") + 
+  labs(fill = "Search value:") +
+  coord_sf(xlim = c(-170.00, 180.00), ylim = c(-60.00, 90.00), expand = FALSE) 
