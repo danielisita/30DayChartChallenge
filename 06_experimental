@@ -1,0 +1,40 @@
+
+# Clean all
+rm(list = ls())
+
+# Set working dir:
+setwd('../06_experimental/')
+
+# DEFINING VARIABLES
+r <- .05 # interest rate
+N <- 10000 # number of steps
+t <- 1/2  # time of maturity: 6 months
+sigmat <- c(0.12, 0.13, 0.15, 0.17) # time depending volatility
+paths = 25 # number of different scenarios
+
+set.seed(1234) # to have always the same data
+B <- matrix(rnorm((N+1)*paths, 0, sqrt(t/N)), (N+1), paths)
+
+B[1,] <- 0 # initial value
+St_SDE <- matrix(rep(0,(N+1)*paths),(N+1), paths)
+St_SOL <- matrix(rep(0,(N+1)*paths),(N+1), paths)
+S0 <- 100
+
+#SDE METHOD
+St_SDE[1,] <- S0 # initial value
+for (j in 1:paths) {
+  for (i in 2:(N+1)) {
+      sigmai <- ifelse(6-i*6/N>=5, sigmat[1],
+                      ifelse(6-i*6/N>=3, sigmat[2],
+                             ifelse(6-i*6/N>=1, sigmat[3], sigmat[4])))
+      St_SDE[i,j] <- St_SDE[i-1,j]+(sigmai)*St_SDE[i-1,j]*B[i,j]+r*St_SDE[i-1,j]*t/N
+    } 
+}
+
+# The plot
+matplot(St_SDE,main="Brownian Motion Paths (SDE)",
+            xlab="Time",
+            ylab="Stock Price",
+            type="l", lty = "solid", lwd = 2.2, col = rainbow(15, alpha = .5))
+
+
