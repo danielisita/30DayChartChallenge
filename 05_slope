@@ -1,0 +1,73 @@
+
+# Set working directory:
+setwd('../30DayCharts/05_slope/')
+
+# Clean all
+rm(list = ls())
+
+# Libraries
+library(tidyverse)
+library(zoo)
+library(patchwork) # To display 2 charts together
+library(hrbrthemes)
+
+# Load the data and change the date format
+pib <- read_csv('gdp.csv')
+pib$quarter = as.yearqtr(pib$date_q1,format="%Yq%q")
+
+pib2 <- read_csv('pib_activities.csv')
+pib2$quarter = as.yearqtr(pib2$date_q1,format="%Yq%q")
+
+# First pilot plot (gdp growth change):
+ggplot(pib, aes(x=quarter)) +
+  geom_bar(aes(y=gdp_perc), stat="identity", 
+           size=.1, fill="#69b3a2", color="black", alpha=.4) +
+  scale_y_continuous(name = "GDP change in %") +
+  xlab("Time") +
+  # scale_x_yearqtr(format = "%Y-%q") +
+  theme_ipsum() + theme(
+    axis.title.y = element_text(color = "#69b3a2", size=13),
+    axis.title.y.right = element_text(color = rgb(0.2, 0.6, 0.9, 1), 
+                                      size=13),
+    axis.title.x = element_text(color = "#69b3a2", size=13),
+    axis.title.x.top = element_text(color = rgb(0.2, 0.6, 0.9, 1), 
+                                    size=13)) + 
+  ggtitle("Quarter GDP growth in Mexico")
+
+# Lets modify minor details:
+ggplot(pib, aes(x=quarter)) +
+  geom_smooth(aes(y=gdp_perc), span = 0.1, color = "red") +
+  geom_bar(aes(y=gdp_perc), stat="identity", 
+           size=.1, fill="#69b3a2", color="black", alpha=.1) +
+  scale_y_continuous(name = "GDP change in %") +
+  xlab("Time") +
+  # scale_x_yearqtr(format = "%Y-%q") +
+  theme_ipsum() + theme(
+    axis.title.y = element_text(color = "#69b3a2", size=13),
+    axis.title.y.right = element_text(color = rgb(0.2, 0.6, 0.9, 1), 
+                                      size=14),
+    axis.title.x = element_text(color = "#69b3a2", size=13),
+    axis.title.x.top = element_text(color = rgb(0.2, 0.6, 0.9, 1), 
+                                    size=14)) + 
+  ggtitle("Quarterly GDP growth in Mexico")
+
+# The second plot (activity growth change):
+ggplot(pib2, aes(x=quarter)) +
+  geom_smooth(aes(y=hotels2), span = 0.1, color = "red") +
+  geom_bar(aes(y=hotels2), stat="identity", 
+           size=.1, fill="darkorange", color="black", alpha=.4) +
+  scale_y_continuous(name = "Activity change in %") +
+  xlab("Time") +
+  # scale_x_yearqtr(format = "%Y-%q") +
+  theme_ipsum() + theme(
+    axis.title.y = element_text(color = "darkorange", size=13),
+    axis.title.y.right = element_text(color = rgb(0.2, 0.6, 0.9, 1), 
+                                      size=14),
+    axis.title.x = element_text(color = "darkorange", size=13),
+    axis.title.x.top = element_text(color = rgb(0.2, 0.6, 0.9, 1), 
+                                    size=14)) + 
+  ggtitle("Accomodation and Food Services") 
+
+
+
+
