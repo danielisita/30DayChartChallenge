@@ -1,0 +1,52 @@
+
+# Set working dir:
+setwd('../Desktop/30DayCharts/09_statistics/')
+
+# Clean all
+rm(list = ls())
+
+# Libraries
+library(tidyverse)
+library(gganimate)
+library(ggforce)
+
+# Set seed in order to always have the same results
+set.seed(123)
+values <- rnorm(250)
+
+# We also need an sequence index and a value for bins
+index <- seq(1:length(values))
+bins <- 0.25
+
+# The dataframe
+data <- tibble(values, index)
+
+# Now some transformations in order to count the data
+data2 <- data %>% 
+  mutate(x = plyr::round_any(values, bins)) %>% 
+  group_by(x) %>% 
+  mutate(y = seq_along(x))
+
+p1 <- ggplot(data2, aes(x,y, group = index)) +
+  geom_point(size = 5, alpha=.8) + 
+  labs(x = "", y = "Density", title = "Normal Distriution") + 
+  theme_minimal() +
+  transition_reveal(index)
+  
+animate(p1, width = 550, height = 230, res = 96)
+
+anim_save('normdist1.gif')
+
+# A nicer plot
+p2 <- ggplot(data2) +
+  geom_ellipse(aes(group = index, x0 = x, y0 = y, 
+                   a = bins/2, b = 0.5, angle = 0), 
+               fill = 'steelblue', alpha=.8) +
+  coord_equal(bins) + 
+  labs(x = "", y = "Density", title = "Normal Distriution") + 
+  theme_minimal() +
+  transition_reveal(index) 
+
+animate(p2) 
+
+anim_save('normdist2.gif')
