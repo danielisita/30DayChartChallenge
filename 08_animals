@@ -1,0 +1,60 @@
+
+# Working dir:
+setwd('../30DayCharts/08_animals/')
+
+# Libraries
+library(MASS)
+devtools::install_github("stephlocke/datasauRus")
+library(datasauRus)
+library(tidyverse)
+library(viridis)
+library(hrbrthemes)
+library(ggthemes)
+library(tidytext)
+
+# This was my first option since I was having trouble with finding a dataset of animals
+dino <- datasaurus_dozen %>% 
+  filter(dataset == "dino")
+
+ggplot(dino, aes(x=x, y=y, colour=dataset))+
+  geom_point()+
+  theme_void()+
+  theme(legend.position = "none")
+
+rm(list = ls())
+
+# Data
+data <- read_csv('animals1.csv') 
+View(data)
+
+# We don't care for the plant category
+data <- data %>% select(country, type, value) %>% 
+  filter(type != "PLANT")
+
+# First plot
+ggplot(data, aes(y=reorder(country, -value), x=value, fill=type)) + 
+  geom_bar(position="dodge", stat = "identity") + theme_classic()
+
+# Second plot
+ggplot(data, aes(y=reorder(country, -value), x=value)) + 
+  geom_bar(position="dodge", stat = "identity") + theme_classic() +
+  facet_wrap(~type) +
+  theme_ipsum() +
+  theme(legend.position="none") +
+  labs(x = "Percentage",
+       y = "Country")
+
+# Final plot
+data %>% 
+  mutate(country = reorder_within(country, value, type)) %>% 
+  ggplot(aes(y=country, x=value)) + 
+  geom_col(alpha=.8, width=.7) +
+  scale_y_reordered() +
+  labs(x="",y="", title = "Threatened species", subtitle = "OECD Countries") + 
+  theme_wsj() + 
+  facet_wrap(~type, scales = "free_y") + 
+  aes(fill = type) + 
+  theme(legend.position = "none",
+        strip.text.x = element_text(size = 12, 
+                                    color = "darkgray", 
+                                    face = "bold.italic"))
