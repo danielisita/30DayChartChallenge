@@ -1,0 +1,23 @@
+
+# Clean all environment
+rm(list = ls())
+
+# Working dir:
+setwd('../30DayCharts/01_part_to_hole/')
+
+# Set the libraries
+library(pacman)
+p_load(tidyverse, treemap)
+
+# Load the data
+group <- read_csv('group.csv')
+
+# The treemap plot:
+treemap(group,
+        index="group",
+        vSize="value",
+        type="index",
+        palette = "Reds",
+        title = "Average quarterly monetary current expenditure per household (2018)",
+        fontsize.title = 14
+)
