@@ -1,0 +1,76 @@
+
+# Set working dir
+setwd('../30DayCharts/03_historical/')
+
+# Clean all
+rm(list = ls())
+
+# Use tidyverse
+library(tidyverse)
+
+# Get the countries from {gapminder}:
+install.packages("gapminder")
+library(gapminder)
+
+# Run other libraries:
+install.packages("gganimate")
+library(gganimate)
+
+# For gif output
+install.packages("gifski")
+library(gifski)
+
+# Im using the list of countries from gapminder:
+a <- gapminder
+
+# Now Im reading my co2 data
+data <- read.csv('co2.csv')
+library(tidyr)
+
+# Transform the data
+b <- data %>% pivot_longer(
+  cols = starts_with("X"),
+  names_to = "years",
+  values_drop_na = F) %>% 
+  rename(country = ï..country,
+         year = years) %>% 
+  filter(serie == "CO2 emissions (metric tons per capita)")
+
+# Take the X before the years
+b <- b %>% 
+  mutate(year = str_sub(year, 2, 5))
+
+# Convert year to numeric
+b$year <- as.numeric(b$year)
+
+# Combine the datas
+c <- left_join(a,b)
+
+# Create a new one to impute the values for the years we dont have data
+d <- c %>% select(country, year, value)
+d <- c %>% select(country, year, value)
+
+# Library for imputation
+library(mice)
+# Imputation
+imp <- mice(d, m=2, maxit = 2, method = 'pmm') 
+e <- complete(imp)
+
+# We change the old variable with the new one
+new <- c %>% select(!value)
+new2 <- left_join(new, e)
+
+# Finally the gif
+ggplot(new2, aes(gdpPercap, value, size = pop, colour = country)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~continent) + theme_bw() +
+  # Here comes the gganimate specific bits
+  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'CO2 per capita (metric tons)') +
+  transition_time(year) +
+  ease_aes('linear')
+
+# Save at gif:
+anim_save("co2.gif")
