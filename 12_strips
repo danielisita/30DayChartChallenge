@@ -1,0 +1,91 @@
+
+# Directory
+setwd('../Desktop/30DayCharts/12_strips/')
+
+# Libraries
+library(tidyverse)
+library(lubridate)
+library(RColorBrewer)
+library(zoo)
+
+# Import and load the annual temperatures
+# https://climateknowledgeportal.worldbank.org/download-data
+mex_temp <- read_csv('mexico.csv')
+View(mex_temp)
+
+# Lets select just the mean temp and the year
+temp <- mex_temp %>% 
+  rename(temperature = `Temperature - (Celsius)`,
+         year = Year) %>% 
+  group_by(year) %>% mutate(
+    mean_temp = mean(temperature)
+  ) %>% slice(1) %>% select(year, mean_temp)
+
+# Any missing value?
+sum(is.na(temp))
+summary(temp)
+
+# All looks good!
+
+# Now lets create a date variable for the plot:
+temp <- temp %>% mutate(
+  date = as.Date(ISOdate(year, 1, 1))
+)
+
+# Deviation from mean
+temp$difference <- (temp$mean_temp - mean(temp$mean_temp))
+
+# We need to set up the theme for the strips. I'm using the
+# same template of Dominic Royé from:
+# https://dominicroye.github.io/en/2018/how-to-create-warming-stripes-in-r/
+
+theme_strip <- theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.title = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.title = element_blank(),
+        axis.text.x = element_text(vjust = 3),
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 14, face = "bold"))
+
+# We can check all the color palettes we can use
+brewer.pal.info
+
+# "RdBu" are red and blue colors
+col_strip <- brewer.pal(11, "RdBu")
+
+# The plot
+ggplot(temp,
+       aes(x = date, y = 1, fill = difference)) +
+  geom_tile() +
+  scale_x_date(date_breaks = "8 years",
+               date_labels = "%Y",
+               expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradientn(colors = rev(col_strip)) +
+  guides(fill = guide_colorbar(barwidth = 1)) +
+  labs(title = "Mexico 1901-2016",
+       subtitle = "Annual deviation with respect to the average temperature of the period",
+       caption = "Data: World Bank Group") +
+  theme_strip
+
+# Save the plot in directory
+p1 <- last_plot()
+ggsave('p1.png',
+       width = 8, height = 4.5, type = "cairo-png")
+
+# Simple version
+ggplot(temp,
+       aes(x = date, y = 1, fill = mean_temp))+
+  geom_tile(show.legend = FALSE) +
+  scale_x_date(date_breaks = "8 years",
+               date_labels = "%Y",
+               expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) +
+  scale_fill_gradientn(colors = rev(col_strip)) +
+  theme_void()
+
+p2 <- last_plot()
+ggsave('p2.png',
+       width = 8, height = 4.5, type = "cairo-png")
