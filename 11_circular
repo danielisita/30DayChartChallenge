@@ -1,0 +1,78 @@
+
+# Clean all:
+rm(list = ls())
+
+# Set working dir
+setwd('../11_circular/')
+
+# libraries
+pacman::p_load(tidyverse, rvest, stringr, syuzhet, textdata, 
+               tidytext, lubridate, GGally, reshape2, rtweet)
+
+# Word dictionary
+get_sentiments("afinn") 
+# http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010
+
+# Other dictionaries
+get_sentiments("bing")
+get_sentiments("nrc")
+
+# The one we use, is spanish and english
+dicc <- read_csv("https://raw.githubusercontent.com/jmtoral/Curso_Virtual_Text_Mining/master/lexico_afinn.en.es.csv",
+                 locale=locale(encoding = "LATIN1"))
+
+# Lets download the tweets:
+tmls <-  get_timelines(c("EnriqueAlfaroR", "Claudiashein"), n = 3200, include_rts = FALSE)
+
+# Put an id
+tmls <- tmls %>% 
+  rowid_to_column
+
+# Tokenize them
+pal <- tmls %>% 
+  rowid_to_column("id") %>% 
+  unnest_tokens(palabras, text) %>% 
+  select(id, created_at, screen_name, palabras) %>% 
+  filter(!palabras %in% tm::stopwords(kind = "es"),
+         !palabras %in% c("https", "t.co")) %>% 
+  count(screen_name, palabras)
+
+pal %>% 
+  group_by(screen_name) %>% 
+  summarise(total.diferentes = n(),
+            total.palabras = sum(n))
+
+pal.sentimientos <- pal %>% 
+  inner_join(dicc, by=c("palabras"="Palabra")) %>% 
+  distinct(palabras, .keep_all = T)
+
+# Total sentiment punctuation 
+pal.sentimientos %>% 
+  group_by(screen_name) %>% 
+  summarise(neto = sum(Puntuacion))
+
+# Wordcloud
+
+pal.sentimientos %>% 
+  mutate(sentimiento = case_when(
+    Puntuacion > 0 ~ "Positivo",
+    Puntuacion < 0 ~ "Negativo"
+  )) %>% 
+  arrange(-n) %>% 
+  acast(palabras ~ sentimiento, fill = 0, value.var = "n") %>% 
+  wordcloud::comparison.cloud(colors = c("red", "blue"),
+                              max.words = 100)
+
+# Final graph
+
+png("1.png", width = 600, height = 600,
+    res = )
+
+pal.sentimientos %>% 
+  arrange(-n) %>% 
+  acast(palabras ~ screen_name, fill = 0, value.var = "n") %>% 
+  wordcloud::comparison.cloud(colors = c("#690d0d", "darkorange"),
+                              max.words = 200)
+
+dev.off()
+
