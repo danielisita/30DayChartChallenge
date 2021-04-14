@@ -1,0 +1,98 @@
+
+# Clean
+rm(list = ls())
+
+# Directory
+setwd('../Desktop/30DayCharts/14_space/')
+
+# I followed Esteban Moro's tutorial:
+# http://estebanmoro.org/post/2020-10-19-personal-art-map-with-r/
+
+# Libraries
+library(tidyverse)
+library(osmdata)
+library(sf)
+# library(tigris)
+
+# The coordenates:
+bbx <- getbb("New York, NY")
+
+# We can move them and have a more specific area:
+min_lon <- -74.05
+max_lon <- -73.89
+min_lat <- 40.70
+max_lat <- 40.85
+
+bbx <- rbind(x=c(min_lon,max_lon),y=c(min_lat,max_lat))
+colnames(bbx) <- c("min","max")
+
+# osm has many features, eg:
+available_tags('highway')
+
+# First, we want only the highways
+hway <- bbx %>% 
+  opq() %>% 
+  add_osm_feature(key = 'highway',
+                  value=c("motorway", "trunk",
+                          "primary","secondary", 
+                          "tertiary","motorway_link",
+                          "trunk_link","primary_link",
+                          "secondary_link",
+                          "tertiary_link")) %>% 
+  osmdata_sf()
+
+# Plot
+ggplot() +
+  geom_sf(data=hway$osm_lines,
+          aes(color = highway),
+          size = 0.4, alpha = 0.65) +
+  theme_void()
+
+p <- last_plot()
+ggsave('ny_000.png',
+       width = 8, height = 4.5, type = "cairo-png")
+
+# Now for smaller streets
+streets <- bbx %>%
+  opq() %>%
+  add_osm_feature(key = "highway", 
+                  value = c("residential", "living_street",
+                            "service","unclassified",
+                            "pedestrian", "footway",
+                            "track","path")) %>%
+  osmdata_sf()
+
+# Plot
+ggplot() +
+  geom_sf(data = streets$osm_lines,
+          aes(color=highway),
+          size = .32,
+          alpha = .65)+
+  theme_void()
+
+p <- last_plot()
+ggsave('ny_01.png',
+       width = 8, height = 4.5, type = "cairo-png")
+
+# Merging both of them and changing the layout
+
+color_roads <- rgb(0.42,0.449,0.488)
+
+ggplot() +
+  geom_sf(data = streets$osm_lines,
+          col = color_roads,
+          size = .35,
+          alpha = .65) +
+  geom_sf(data = hway$osm_lines,
+          col = color_roads,
+          size = .6,
+          alpha = .8)+
+  coord_sf(xlim = c(min_lon,max_lon),
+           ylim = c(min_lat,max_lat),
+           expand = FALSE) +
+  theme(legend.position = F) + theme_void() 
+
+p <- last_plot()
+ggsave('ny_02.png',
+       width = 8, height = 4.5, type = "cairo-png")
+
