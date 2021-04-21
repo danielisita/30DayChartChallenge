@@ -1,0 +1,30 @@
+
+# Clean all
+rm(list = ls())
+
+# Set work dir
+setwd('../30DayCharts/19_global_change/')
+
+# Libraries
+pacman::p_load(latex2exp, ggthemes, tidyverse)
+
+# Data
+co2_cont <- read_csv("Data/co2.csv") %>% 
+  drop_na(continent) %>% 
+  filter(year >= 1980)
+
+# Some filters
+data <- co2_cont %>% ungroup() %>%  
+  filter(continent == "AFRICA" | continent == "AME_NORTH" |
+         continent == "ASIA" | continent == "EUROPE" |
+         continent == "AME_SOUTH" | continent == "OCEANIA")
+ 
+ # Plot
+ data %>% 
+   ggplot(aes(x=year, y=co2/1000, color = continent)) +
+   geom_line(size = 1.4, alpha = .8) + expand_limits(y=0) +
+   scale_color_jcolors(palette = "rainbow") + theme_classic() +
+   labs(title = TeX("Total Emissions by Continent"),
+       subtitle = "Billions of Tons",
+       x = "Year", y = TeX("$CO_2$")) + 
+   theme(text = element_text(size = 20))
