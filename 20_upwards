@@ -1,0 +1,55 @@
+
+# Clean
+rm(list = ls())
+
+# Directory
+setwd('Desktop/30DayCharts/20_upwards/')
+
+# Libraries
+library(tidyverse)
+library(readxl)
+library(gganimate)
+library(hrbrthemes)
+library(viridis)
+
+# Data
+# You can download it from:
+# https://www.inegi.org.mx/temas/nupcialidad/#Tabulados
+# It is called: "Relación divorcios-matrimonios por entidad ..."
+
+data <- read_excel("Nupcialidad_07.xlsx", 
+                   skip = 3, n_max = 33)
+
+View(data)
+
+# Rename the state variable
+data <- data %>% 
+  rename(estado = `Entidad federativa de registro`)
+
+# Change the structure of the data
+data <- data %>% pivot_longer(!estado, names_to = "year")
+# Year as numeric
+data$year <- as.numeric(data$year)
+# Look at the data
+str(data)
+View(data)
+
+# Now we have the structure that we wanted!
+
+# Plot
+
+data %>% filter(estado != "Estados Unidos Mexicanos") %>% 
+  ggplot(aes(x=year, y=value, group=estado, color=estado)) +
+  geom_line(size = 1.1, alpha = 0.8) +
+  geom_point(size = 2) +
+  scale_color_viridis(discrete = TRUE, name = "States") +
+  theme_bw() + theme(text = element_text(size=14)) +
+  labs(title = "Divorce-marriage relationship by state",
+       subtitle = "Divorces for every 100 marriages",
+       y = "Relationship", x = "Year") +
+  transition_reveal(year) -> gif1
+
+animate(gif1, height = 408, width =750)
+
+# Save at gif:
+anim_save('output/national.gif')
