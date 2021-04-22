@@ -1,0 +1,78 @@
+# Clean all
+rm(list = ls())
+
+# Directory
+setwd('../Desktop/30DayCharts/22_animation/')
+
+# Libraries
+library(tidyverse)
+library(readr)
+library(zoo)
+library(lubridate)
+library(RColorBrewer)
+library(gganimate)
+
+# Data
+path <- "https://data.giss.nasa.gov/gistemp/graphs/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.txt"
+
+# read_table2 is useful for txt files
+# Lets look at the format first
+read_table2(path)
+
+# Lets make some changes and store it in our global environment
+data <- read_table2(path, skip = 2)[-1,] %>% 
+  rename(year = Year,
+         no_smooth = No_Smoothing,
+         smooth = `Lowess(5)`) %>% 
+  mutate(date = as.Date(ISOdate(year, 1, 1)))
+
+data
+
+# Now looks good!
+
+# The same theme we used for the strips
+theme_strip <- theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.title = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.title = element_blank(),
+        axis.text.x = element_text(vjust = 3),
+        panel.grid.minor = element_blank())
+
+
+# We can check all the color palettes we can use
+brewer.pal.info
+
+# "RdBu" are red and blue colors
+col_strip <- brewer.pal(11, "RdBu")
+
+# The plot
+p <- ggplot(data,
+       aes(x = 1, y = 1, fill = smooth)) +
+  geom_tile() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradientn(colors = rev(col_strip)) +
+  guides(fill = guide_colorbar(barwidth = 1)) +
+  labs(title = 'Change in global surface temperature',
+       subtitle = "({frame_time})",
+       caption = "Latest annual average anommaly (2020) was 1.02 °C") +
+  theme_strip + theme(plot.title = element_text(color = "#993333",
+                                                face = "bold",
+                                                size = 18),
+                      plot.subtitle = element_text(face = "bold",
+                                                   size = 17),
+                      plot.caption = element_text(face = "bold"),
+                      axis.ticks.x = element_blank(),
+                      axis.text.x.bottom = element_blank(),
+                      text = element_text(size = 16)) +
+  transition_time(as.integer(year)) +
+  ease_aes('linear')
+
+# Animate the figure with a pause at the end
+animate(p, fps = 3, width = 430, height = 270, end_pause = 15)
+
+# Save the gif
+anim_save('world_temp.gif')
+
