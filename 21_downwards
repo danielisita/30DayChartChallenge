@@ -1,0 +1,46 @@
+
+# Clean all
+rm(list = ls())
+
+# Directory
+setwd('../Desktop/30DayCharts/21_downwards/')
+
+# libraries
+library(tidyverse)
+library(ggthemes)
+library(ggdark)
+
+# Data (monthly)
+# https://www.inegi.org.mx/app/animotuitero/#/app/multiline
+
+data <- read_csv('monthly.csv')
+data$fecha <- as.Date(data$fecha)
+class(data$fecha)
+
+# Lets have a look at the trend
+plot(data$indice, type = "l")
+
+# The plot
+ggplot(data, aes(fecha, indice)) +
+  geom_line(size=1.2) +
+  geom_smooth(color="red", size =1,
+              fill="#69b3a2", se=TRUE, span = 1.5) +
+  dark_theme_gray(base_family = "Fira Sans Condensed Light", 
+                  base_size = 14) +
+  labs(title = "Falling mood!", 
+       subtitle = "Mood of Twitter users in Mexico",
+       x = "Date", y = "Index") +
+  theme(plot.title = element_text(family = "Fira Sans Condensed"),
+        plot.background = element_rect(fill = "grey10"),
+        panel.background = element_blank(),
+        panel.grid.major = element_line(color = "grey30", size = 0.2),
+        panel.grid.minor = element_line(color = "grey30", size = 0.2),
+        legend.background = element_blank(),
+        axis.ticks = element_blank(),
+        legend.key = element_blank(),
+        legend.position = c(0.815, 0.27))
+
+# Save the plot
+p <- last_plot()
+ggsave('twitter.png',
+       width = 8, height = 4.5, type = "cairo-png")
